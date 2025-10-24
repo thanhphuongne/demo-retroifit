@@ -1,27 +1,34 @@
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var textView: android.widget.TextView
+    private lateinit var statusTextView: android.widget.TextView
+    private lateinit var userNameTextView: android.widget.TextView
+    private lateinit var userEmailTextView: android.widget.TextView
+    private lateinit var userCompanyTextView: android.widget.TextView
+    private lateinit var refreshButton: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
         try {
-            // Create a simple TextView programmatically for demo
-            textView = android.widget.TextView(this).apply {
-                text = "Retrofit Demo - Starting..."
-                textSize = 18f
-                setPadding(32, 32, 32, 32)
-                gravity = android.view.Gravity.CENTER
-                setBackgroundColor(android.graphics.Color.WHITE)
-                setTextColor(android.graphics.Color.BLACK)
+            // Initialize views
+            statusTextView = findViewById(R.id.statusTextView)
+            userNameTextView = findViewById(R.id.userNameTextView)
+            userEmailTextView = findViewById(R.id.userEmailTextView)
+            userCompanyTextView = findViewById(R.id.userCompanyTextView)
+            refreshButton = findViewById(R.id.refreshButton)
+
+            refreshButton.setOnClickListener {
+                makeApiCall()
             }
-            setContentView(textView)
 
             Log.d("RETROFIT_DEMO", "App started successfully")
 
@@ -31,12 +38,7 @@ class MainActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             Log.e("RETROFIT_DEMO", "Error in onCreate: ${e.message}", e)
-            // Fallback if anything goes wrong
-            super.setContentView(android.widget.TextView(this).apply {
-                text = "Error: ${e.message}"
-                textSize = 16f
-                setPadding(16, 16, 16, 16)
-            })
+            statusTextView.text = "Error: ${e.message}"
         }
     }
 
@@ -54,16 +56,30 @@ class MainActivity : AppCompatActivity() {
                                 Log.d("API_SUCCESS", "User name: ${user?.name}")
                                 Log.d("API_SUCCESS", "User email: ${user?.email}")
                                 Log.d("API_SUCCESS", "User company: ${user?.company?.name}")
-                                textView.text = "✅ API Success!\n\n👤 User: ${user?.name}\n📧 Email: ${user?.email}\n🏢 Company: ${user?.company?.name}"
+                                statusTextView.text = "✅ API Success!"
+                                userNameTextView.text = "👤 Name: ${user?.name}"
+                                userEmailTextView.text = "📧 Email: ${user?.email}"
+                                userCompanyTextView.text = "🏢 Company: ${user?.company?.name}"
+                                userNameTextView.visibility = View.VISIBLE
+                                userEmailTextView.visibility = View.VISIBLE
+                                userCompanyTextView.visibility = View.VISIBLE
                             } else {
                                 // Xử lý lỗi từ server (ví dụ: 404, 500)
                                 Log.e("API_ERROR", "Error code: ${response.code()}")
-                                textView.text = "❌ API Error: ${response.code()}\n\nCheck Logcat for details"
+                                statusTextView.text = "❌ API Error: ${response.code()}\n\nCheck Logcat for details"
+                                hideUserDetails()
                             }
                         } catch (e: Exception) {
                             Log.e("RETROFIT_DEMO", "Error updating UI: ${e.message}", e)
-                            textView.text = "❌ UI Update Error: ${e.message}"
+                            statusTextView.text = "❌ UI Update Error: ${e.message}"
+                            hideUserDetails()
                         }
+                    }
+                
+                    private fun hideUserDetails() {
+                        userNameTextView.visibility = View.GONE
+                        userEmailTextView.visibility = View.GONE
+                        userCompanyTextView.visibility = View.GONE
                     }
                 }
 
@@ -72,10 +88,12 @@ class MainActivity : AppCompatActivity() {
                         try {
                             // Xử lý lỗi mạng (ví dụ: mất kết nối)
                             Log.e("API_FAILURE", "Error: ${t.message}")
-                            textView.text = "❌ Network Error:\n\n${t.message}\n\nCheck internet connection"
+                            statusTextView.text = "❌ Network Error:\n\n${t.message}\n\nCheck internet connection"
+                            hideUserDetails()
                         } catch (e: Exception) {
                             Log.e("RETROFIT_DEMO", "Error in onFailure: ${e.message}", e)
-                            textView.text = "❌ Unexpected Error"
+                            statusTextView.text = "❌ Unexpected Error"
+                            hideUserDetails()
                         }
                     }
                 }
@@ -83,7 +101,8 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("RETROFIT_DEMO", "Error making API call: ${e.message}", e)
             runOnUiThread {
-                textView.text = "❌ API Call Setup Error:\n\n${e.message}"
+                statusTextView.text = "❌ API Call Setup Error:\n\n${e.message}"
+                hideUserDetails()
             }
         }
     }
